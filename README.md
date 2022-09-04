@@ -8,6 +8,7 @@ The main steps are:
 3. In order to train the model, we need:
 - training, validation and test sets in the form of X, Y as described above
 - the word embedding matrix
+
 so a TweetsParser object is created which prepares these files (either doing the parsing from scratch or loading them from the saved files)
 then they are passed to the model, which does the training and the fitting of the model.
 
