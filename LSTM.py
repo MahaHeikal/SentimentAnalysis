@@ -22,15 +22,13 @@ class LSTM_Config(object):
         self.lr = lr
         self.dense_hidden_size = dense_hidden_size
         self.batch_size = batch_size
-        self.model_name = "lstm__lstm_size_{}__lr_{}__dropout_{}__dense_size_{}_{}padding" \
-            .format(lstm_hidden_size, lr, dropout, dense_hidden_size, self.n_words_per_tweet)
 
 
 class LSTM_Model(object):
 
     def __init__(self, config, parser):
         self.config = config
-        self.weights_path = "model_weights/{}_padding/best-weights-{}.hdf5".format(config.n_words_per_tweet, config.model_name)
+        self.weights_path = "lstm_model_best_weights.hdf5"
         self.parser = parser
         self.model = self._build_model()
 
@@ -79,10 +77,51 @@ class LSTM_Model(object):
 
         print "\nDone, total time: {:.2f} mins\n".format((time.time() - start) / 60.0)
 
+    def evaluate_model(self):
+        self.model.load_weights(self.weights_path)
+        score = self.model.evaluate(self.parser.x_test, self.parser.y_test, batch_size=self.config.batch_size, verbose=1)
+        print('Test Loss:', score[0])
+        print('Test accuracy:', score[1])
+        return score[0], score[1]
+
+
+    def evaluate_with_metrics(self):
+        self.model.load_weights(self.weights_path)
+        y_pred = self.model.predict_classes(self.parser.x_test)
+
+        f1_weighted = f1_score(self.parser.y_test, y_pred, average='weighted')
+        print "F1 weighted measure is {}".format(f1_weighted)
+
+        precison = precision_score(self.parser.y_test, y_pred)
+        print "Precision is {}".format(precison)
+
+        accuracy = accuracy_score(self.parser.y_test, y_pred)
+        print "Accuracy is {}".format(accuracy)
+
+        return accuracy, f1_weighted, precison
+
+class AccuracyHistory(Callback):
+    def on_train_begin(self, logs={}):
+        self.acc = []
+        self.loss = []
+        self.max_acc = -10000
+        self.val_loss = 10000
+
+    def on_epoch_end(self, batch, logs={}):
+        current_acc = logs.get('val_acc')
+        current_loss = logs.get('val_loss')
+        self.acc.append(current_acc)
+        self.loss.append(current_loss)
+        if (current_acc > self.max_acc):
+            self.max_acc = current_acc
+            self.val_loss = current_loss
+
 
 if __name__ == "__main__":
-    tweets_parser = TweetsParser(False)
-    lstm_model = LSTM_Model(config, parser)
+    config = LSTM_Config()
+    tweets_parser = TweetsParser(True)
+    lstm_model = LSTM_Model(config, tweets_parser)
     lstm_model.fit_model()
+    lstm_model.evaluate_with_metrics()
 
 
