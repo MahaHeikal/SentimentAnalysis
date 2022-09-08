@@ -12,3 +12,9 @@ The main steps are:
 so a TweetsParser object is created which prepares these files (either doing the parsing from scratch or loading them from the saved files)
 then they are passed to the model, which does the training and the fitting of the model.
 
+## How to run:
+- Download the Aravec word embeddings from [here](https://drive.google.com/drive/folders/1KqHedTrS_zu5c89hPyeU37jOE0ITTqI3?usp=sharing) and save the folder in the root directory
+- The main method in both models will prepare the dataset vectors, fit the model then evaluates it (calculating the accuracy, precision and F1 score). You can run both models from command line as follows
+`python CNN.py`
+and
+`python LSTM.py`
