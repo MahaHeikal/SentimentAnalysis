@@ -1,10 +1,7 @@
 from keras.layers.embeddings import Embedding
 from keras import Sequential
-from keras.layers import Conv2D
 from keras.layers import Conv1D
 from keras.layers import GlobalMaxPooling1D
-from keras.layers import ZeroPadding2D
-from keras.layers.merge import Concatenate
 from keras.layers import Merge
 from keras.layers import Dense
 from keras.layers import Activation
@@ -13,6 +10,7 @@ from keras.optimizers import Adam
 from keras.callbacks import Callback
 from keras.callbacks import ModelCheckpoint
 import numpy as np
+from sklearn.metrics import f1_score, precision_score, accuracy_score
 
 from TweetsParser import TweetsParser
 
@@ -35,6 +33,7 @@ class CNN_Model(object):
 
     def __init__(self, parser):
         self.config = Config()
+        self.weights_path = "cnn_model_best_weights.hdf5"
         self.parser = parser
         self.model = self._build_model()
 
@@ -80,8 +79,7 @@ class CNN_Model(object):
         valid_set = [self.parser.x_valid, self.parser.x_valid, self.parser.x_valid]
 
         self.history = AccuracyHistory()
-        filepath = "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5"
-        checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+        checkpoint = ModelCheckpoint(self.weights_path, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 
         self.model.fit(train_set,
                        self.parser.y_train,
@@ -92,6 +90,37 @@ class CNN_Model(object):
                        callbacks=[self.history, checkpoint])
 
 
+    def evaluate_model(self):
+        self.model.load_weights(self.weights_path)
+        test_set = [self.parser.x_test, self.parser.x_test, self.parser.x_test]
+        score = self.model.evaluate(test_set, self.parser.y_test, batch_size=self.config.batch_size, verbose=1)
+        print('Test Loss:', score[0])
+        print('Test accuracy:', score[1])
+        return score[0], score[1]
+
+
+    def evaluate_with_metrics(self):
+        self.model.load_weights(self.weights_path)
+        test_set = [self.parser.x_test, self.parser.x_test, self.parser.x_test]
+        y_pred = self.model.predict_classes(test_set)
+
+        f1_weighted = f1_score(self.parser.y_test, y_pred, average='weighted')
+        print "F1 weighted measure is {}".format(f1_weighted)
+
+        accuracy = accuracy_score(self.parser.y_test, y_pred)
+        print "Accuracy is {}".format(accuracy)
+
+        precison = precision_score(self.parser.y_test, y_pred)
+        print "Precision is {}".format(precison)
+
+        print ("Num training examples: ", len(self.parser.x_train))
+        print ("Num validation examples: ", len(self.parser.x_valid))
+        print ("Num testing examples: ", len(self.parser.x_test))
+
+        print np.bincount(self.parser.y_test)
+
+        return accuracy, f1_weighted, precison
+
 class AccuracyHistory(Callback):
     def on_train_begin(self, logs={}):
         self.acc = []
@@ -101,7 +130,8 @@ class AccuracyHistory(Callback):
 
 
 if __name__ == "__main__":
-    tweets_parser = TweetsParser(False)
+    tweets_parser = TweetsParser(True)
     cnn_model = CNN_Model(tweets_parser)
     cnn_model.fit_model()
+    cnn_model.evaluate_with_metrics()
 
