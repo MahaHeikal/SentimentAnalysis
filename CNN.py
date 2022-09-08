@@ -124,9 +124,18 @@ class CNN_Model(object):
 class AccuracyHistory(Callback):
     def on_train_begin(self, logs={}):
         self.acc = []
+        self.loss = []
+        self.max_acc = -10000
+        self.val_loss = 10000
 
     def on_epoch_end(self, batch, logs={}):
-        self.acc.append(logs.get('acc'))
+        current_acc = logs.get('val_acc')
+        current_loss = logs.get('val_loss')
+        self.acc.append(current_acc)
+        self.loss.append(current_loss)
+        if (current_acc > self.max_acc):
+            self.max_acc = current_acc
+            self.val_loss = current_loss
 
 
 if __name__ == "__main__":
