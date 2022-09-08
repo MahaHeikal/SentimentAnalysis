@@ -13,7 +13,7 @@ so a TweetsParser object is created which prepares these files (either doing the
 then they are passed to the model, which does the training and the fitting of the model.
 
 ## How to run:
-- Download the Aravec word embeddings from [here](https://drive.google.com/drive/folders/1KqHedTrS_zu5c89hPyeU37jOE0ITTqI3?usp=sharing) and save the folder in the root directory.
+- Download the Aravec word embeddings from [here](https://drive.google.com/drive/folders/1KqHedTrS_zu5c89hPyeU37jOE0ITTqI3?usp=sharing) and save the folder with it's name "tweets_sg_300" under the root directory.
 - From the command line run `python CNN.py` or`python LSTM.py` for CNN and LSTM models respectively. This will prepare the dataset vectors, fit the model then evaluates it calculating the accuracy, precision and F1 score.
 
 ## Environment:
